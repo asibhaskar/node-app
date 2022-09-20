@@ -6,25 +6,27 @@ pipeline {
 
     stage('Checkout Source') {
       steps {
-        git url:'https://github.com/vamsijakkula/hellowhale.git', branch:'master'
+        git url:'https://github.com/asibhaskar/nodeapp_test.git', branch:'master'
       }
     }
     
       stage("Build image") {
             steps {
                 script {
-                    myapp = docker.build("vamsijakkula/hellowhale:${env.BUILD_ID}")
+                    dockerImage = docker.build("abr876/samplejavaapp:${env.BUILD_ID}")
                 }
             }
         }
     
-      stage("Push image") {
+      stage("Pushing image") {
+		   environment {
+					registryCredential = 'dockerhublogins'
+					}	  
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub') {
-                            myapp.push("latest")
-                            myapp.push("${env.BUILD_ID}")
-                    }
+                    docker.withRegistry( 'https://registry.hub.docker.com', registryCredential ) {
+                            dockerImage.push("latest")
+                                                }
                 }
             }
         }
@@ -33,7 +35,7 @@ pipeline {
     stage('Deploy App') {
       steps {
         script {
-          kubernetesDeploy(configs: "hellowhale.yml", kubeconfigId: "mykubeconfig")
+          kubernetesDeploy(configs: "deploymentservice.yml", kubeconfigId: "kubernetes")
         }
       }
     }
